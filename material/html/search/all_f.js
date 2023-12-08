@@ -1,0 +1,25 @@
+var searchData=
+[
+  ['scan_5fparams_0',['scan_params',['../mmanage_8c.html#acb5bf6ba7950e9ec630d59f6425645da',1,'scan_params(int argc, char **argv):&#160;mmanage.c'],['../vmappl_8c.html#acb5bf6ba7950e9ec630d59f6425645da',1,'scan_params(int argc, char **argv):&#160;vmappl.c']]],
+  ['seed_1',['seed',['../vmappl_8c.html#a1447ad288a0a73454510f5777bdc3ed1',1,'vmappl.c']]],
+  ['seed_2',['SEED',['../vmappl_8h.html#ad350bae49f72ba58d73027f1316e38b8',1,'vmappl.h']]],
+  ['seed_5fpf_3',['SEED_PF',['../pagefile_8c.html#af05a977ae5c9cac074cd0d4eda926ae4',1,'pagefile.c']]],
+  ['sendack_4',['sendAck',['../syncdataexchange_8c.html#a5c9b10e399ad771ba70a58a0e752fbc1',1,'sendAck(void):&#160;syncdataexchange.c'],['../syncdataexchange_8h.html#a5c9b10e399ad771ba70a58a0e752fbc1',1,'sendAck(void):&#160;syncdataexchange.c']]],
+  ['sendmsgtommanager_5',['sendMsgToMmanager',['../syncdataexchange_8c.html#a26e4d613b105e76b184ceed5530f2cf5',1,'sendMsgToMmanager(struct msg msg):&#160;syncdataexchange.c'],['../syncdataexchange_8h.html#a26e4d613b105e76b184ceed5530f2cf5',1,'sendMsgToMmanager(struct msg msg):&#160;syncdataexchange.c']]],
+  ['setupsyncdataexchange_6',['setupSyncDataExchange',['../syncdataexchange_8c.html#a4263720223a83d13ce4df4b5de6fdb62',1,'setupSyncDataExchange(void):&#160;syncdataexchange.c'],['../syncdataexchange_8h.html#a4263720223a83d13ce4df4b5de6fdb62',1,'setupSyncDataExchange(void):&#160;syncdataexchange.c']]],
+  ['setupsyncdataexchangeinternal_7',['setupSyncDataExchangeInternal',['../syncdataexchange_8c.html#a59f1d217e01fa9be7652543a821c1ef1',1,'syncdataexchange.c']]],
+  ['shareddata_8',['sharedData',['../syncdataexchange_8c.html#a5c58f882c1379b1c370285aa6e91247b',1,'syncdataexchange.c']]],
+  ['shm_5fid_9',['shm_id',['../mmanage_8c.html#a0e18300528e54d436a8bce8f01238424',1,'shm_id:&#160;mmanage.c'],['../syncdataexchange_8c.html#a0e18300528e54d436a8bce8f01238424',1,'shm_id:&#160;syncdataexchange.c']]],
+  ['shmkey_10',['SHMKEY',['../vmem_8h.html#a012bb047fb1c71a1799f61cfb83491e9',1,'vmem.h']]],
+  ['shmkey_5fsync_5fcom_11',['SHMKEY_SYNC_COM',['../syncdataexchange_8c.html#a65e43ec9125b78733836af7b0829baab',1,'syncdataexchange.c']]],
+  ['shmprocid_12',['SHMPROCID',['../vmem_8h.html#a7696ef1b9a6a31861faa57ad9a216a48',1,'vmem.h']]],
+  ['shmprocid_5fsync_5fcom_13',['SHMPROCID_SYNC_COM',['../syncdataexchange_8c.html#a94cfc366e8d1c29dc0f7352d4d031862',1,'syncdataexchange.c']]],
+  ['shmsize_14',['SHMSIZE',['../vmem_8h.html#a09b8724519795908199fac58fde743a3',1,'vmem.h']]],
+  ['sighandler_15',['sighandler',['../mmanage_8c.html#a049d48681cda954047abd29e67580757',1,'mmanage.c']]],
+  ['sort_16',['sort',['../vmappl_8c.html#ad8244bd854e60254973ea6704b36f712',1,'vmappl.c']]],
+  ['sort_5falgo_17',['sort_algo',['../vmappl_8c.html#a173af285c7272f54a2237db2493c3589',1,'vmappl.c']]],
+  ['store_5fpage_5fto_5fpagefile_18',['store_page_to_pagefile',['../pagefile_8c.html#a7681638d626449d8f5183ff57f382110',1,'store_page_to_pagefile(int pageNo, unsigned char *frame_start):&#160;pagefile.c'],['../pagefile_8h.html#a7681638d626449d8f5183ff57f382110',1,'store_page_to_pagefile(int pageNo, unsigned char *frame_start):&#160;pagefile.c']]],
+  ['swap_19',['swap',['../vmappl_8c.html#adccfbfa411f142fc9eb20fdb65ee4429',1,'vmappl.c']]],
+  ['syncdataexchange_2ec_20',['syncdataexchange.c',['../syncdataexchange_8c.html',1,'']]],
+  ['syncdataexchange_2eh_21',['syncdataexchange.h',['../syncdataexchange_8h.html',1,'']]]
+];
