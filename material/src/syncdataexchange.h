@@ -55,7 +55,7 @@ extern void setupSyncDataExchange(void);
 
 /**
  * @brief   Diese Funktion gibt die Ressourcen, die zum synchronnen Austausch
- *          der Daten benötigt werdeni, wieder frei.
+ *          der Daten benötigt werden, wieder frei.
  *          Diese Funktion wird vom Server aufgerufen.
  */
 extern void destroySyncDataExchange(void);

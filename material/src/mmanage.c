@@ -387,7 +387,7 @@ void vmem_init(void) {
     TEST_AND_EXIT_ERRNO(shmid == VOID_IDX, "ERROR BY CREATING THE SHM");
 
     /* Attach shared memory to vmem (virtual memory) */
-    vmem = (struct vmen_struct*) shmat(shmid,NULL,0);
+    vmem = shmat(shmid,NULL,0);
     TEST_AND_EXIT_ERRNO(vmem == (struct vmen_struct*) VOID_IDX,"ERROR ATTACH SHARED MEMORY TO VMEM");
 
     /* Fill with zeros */
@@ -396,10 +396,18 @@ void vmem_init(void) {
     for(int i = 0; i<VMEM_NPAGES;i++){
         vmem->pt[i].flags = FLAG_INIT;
         vmem->pt[i].frame = 0;
-    }
+
 }
+    }
 
 int find_unused_frame() {
+    for(int i = 0; i < VMEM_NFRAMES; i++){
+        if(!(vmem->pt[i].flags & PTF_REF)){
+            vmem->pt[i].flags |= PTF_REF;
+            return vmem->pt[i].frame;
+        }
+    }
+    return VOID_IDX;
 }
 
 void allocate_page(const int req_page, const int g_count) {
@@ -416,7 +424,24 @@ void allocate_page(const int req_page, const int g_count) {
     logger(le);
 }
 
+
+
+
+
+
+ //  @brief      This function fetchs a page from disk into memory. The page table
+ //              will be updated.
+ //  @param      page Number of the page that should be removed
+ //  @param      frame Number of frame that should contain the page.
+ //
+ //  @return     void
+
+
 void fetch_page_from_disk(int page, int frame){
+    unsigned char startAddress = page * VMEM_NPAGES;
+    fetch_page_from_pagefile(page, &startAddress);
+    vmem->mainMemory[frame] = page;
+    vmem->pt[page].flags |= PTF_PRESENT;
 }
 
 void remove_page_from_memory(int page){

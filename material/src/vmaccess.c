@@ -64,14 +64,15 @@ static void vmem_init(void) {
  *  @return     void
  ****************************************************************************************/
 static void vmem_put_page_into_mem(int address) {
-    int vPageNumber = address / VMEM_PAGESIZE;
-    struct pt_entry p = vmem->pt[vPageNumber];
-    if(p.flags & PTF_PRESENT){
-        return;
-    }
 
-    struct msg message;
-    sendMsgToMmanager(message);
+    int page = address / VMEM_PAGESIZE;
+    if(!(vmem->pt[page].flags & PTF_PRESENT)){
+        //struct msg message_FlagZero = {CMD_PAGEFAULT, page, g_count, PTF_PRESENT};
+        //sendMsgToMmanager(message_FlagZero);
+        return;
+        }
+    struct msg message_FlagOne = {CMD_PAGEFAULT, page, g_count, PTF_PRESENT};
+    sendMsgToMmanager(message_FlagOne);
 }
 
 unsigned char vmem_read(int address) {
@@ -79,28 +80,37 @@ unsigned char vmem_read(int address) {
         vmem_init();
     }
     vmem_put_page_into_mem(address);
-    int vPageNumber = address / VMEM_PAGESIZE;
-    struct pt_entry* p = &vmem->pt[vPageNumber];
-    int offset = address % VMEM_PAGESIZE;
+    int virtual_pageNr = address / VMEM_PAGESIZE;
+    int startAddress = virtual_pageNr * VMEM_NPAGES;
+    int offset = address - startAddress;
+    int pageFrame = vmem->pt[virtual_pageNr].frame;
+
+    int phyAddress = pageFrame * VMEM_PAGESIZE + offset;
+
+    if(!(vmem->pt[virtual_pageNr].flags & PTF_PRESENT)){
+        return 0;
+    }
+    unsigned char data = vmem->mainMemory[phyAddress];
     g_count++;
-    int physicalAdress = p->frame;
-    int erg = physicalAdress * VMEM_PAGESIZE + offset;
-    p->flags = p->flags | PTF_REF;
-    return vmem->mainMemory[erg];
+    return data;
 }
 
 void vmem_write(int address, unsigned char data) {
-      if(!g_count){
+    if(!g_count){
         vmem_init();
     }
     vmem_put_page_into_mem(address);
-    int vPageNumber = address / VMEM_PAGESIZE;
-    struct pt_entry* p = &vmem->pt[vPageNumber];
-    int offset = address % VMEM_PAGESIZE;
+    int virtual_pageNr = address / VMEM_PAGESIZE;
+    int startAddress = virtual_pageNr * VMEM_NPAGES;
+    int offset = address - startAddress;
+    int pageFrame = vmem->pt[virtual_pageNr].frame;
+
+    int phyAddress = pageFrame * VMEM_PAGESIZE + offset;
+
+    if(!(vmem->pt[virtual_pageNr].flags & PTF_PRESENT)){
+        return;
+    }
+    vmem->mainMemory[phyAddress] = data;
     g_count++;
-    int physicalAdress = p->frame;
-    int erg = physicalAdress * VMEM_PAGESIZE + offset;
-    p->flags = p->flags | 0x6;
-    return vmem->mainMemory[erg];
 }
 // EOF
