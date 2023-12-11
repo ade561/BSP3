@@ -41,11 +41,16 @@ static int g_count = 0;    //!< global acces counter as quasi-timestamp - will b
 static void vmem_init(void) {
 
     /* Create System V shared memory */
+    key_t key = ftok(SHMKEY,SHMPROCID);
+    TEST_AND_EXIT_ERRNO(key == VOID_IDX, "ERROR BY CREATING SYSTEM V SHARED MEMORY");
 
     /* We are only using the shm, don't set the IPC_CREAT flag */
+    int shmid = shmget(key,SHMSIZE,0644);
+    TEST_AND_EXIT_ERRNO(shmid == VOID_IDX, "ERROR BY CREATING THE SHM");
 
     /* attach shared memory to vmem */
-
+    vmem = shmat(shmid,NULL,0);
+    TEST_AND_EXIT_ERRNO(vmem == (struct vmen_struct*) VOID_IDX,"ERROR ATTACH SHARED MEMORY TO VMEM");
 }
 
 /**
@@ -64,15 +69,14 @@ static void vmem_init(void) {
  *  @return     void
  ****************************************************************************************/
 static void vmem_put_page_into_mem(int address) {
-
+    if(vmem == NULL){
+        vmem_init();
+    }
     int page = address / VMEM_PAGESIZE;
-    if(!(vmem->pt[page].flags & PTF_PRESENT)){
-        //struct msg message_FlagZero = {CMD_PAGEFAULT, page, g_count, PTF_PRESENT};
-        //sendMsgToMmanager(message_FlagZero);
-        return;
-        }
-    struct msg message_FlagOne = {CMD_PAGEFAULT, page, g_count, PTF_PRESENT};
-    sendMsgToMmanager(message_FlagOne);
+    if((vmem->pt[page].flags & PTF_PRESENT)) {
+        struct msg message_FlagOne = {CMD_PAGEFAULT, page, g_count, 0};
+        sendMsgToMmanager(message_FlagOne);
+    }
 }
 
 unsigned char vmem_read(int address) {
@@ -88,7 +92,7 @@ unsigned char vmem_read(int address) {
     int phyAddress = pageFrame * VMEM_PAGESIZE + offset;
 
     if(!(vmem->pt[virtual_pageNr].flags & PTF_PRESENT)){
-        return 0;
+        vmem->pt[virtual_pageNr].flags |= PTF_PRESENT;
     }
     unsigned char data = vmem->mainMemory[phyAddress];
     g_count++;
@@ -108,7 +112,7 @@ void vmem_write(int address, unsigned char data) {
     int phyAddress = pageFrame * VMEM_PAGESIZE + offset;
 
     if(!(vmem->pt[virtual_pageNr].flags & PTF_PRESENT)){
-        return;
+        vmem->pt[virtual_pageNr].flags |= PTF_PRESENT;;
     }
     vmem->mainMemory[phyAddress] = data;
     g_count++;

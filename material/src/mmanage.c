@@ -374,6 +374,9 @@ void dump_pt(void) {
 /* Your code goes here... */
 
 void cleanup(void) {
+    destroySyncDataExchange();
+    cleanup_pagefile();
+    close_logger();
 }
 
 void vmem_init(void) {
@@ -383,7 +386,7 @@ void vmem_init(void) {
     TEST_AND_EXIT_ERRNO(key == VOID_IDX, "ERROR BY CREATING SYSTEM V SHARED MEMORY");
 
     /* We are creating the shm, so set the IPC_CREAT flag */
-    int shmid = shmget(key,VMEM_PAGESIZE,0644 | IPC_CREAT);
+    int shmid = shmget(key,SHMSIZE,0644 | IPC_CREAT);
     TEST_AND_EXIT_ERRNO(shmid == VOID_IDX, "ERROR BY CREATING THE SHM");
 
     /* Attach shared memory to vmem (virtual memory) */
@@ -395,7 +398,7 @@ void vmem_init(void) {
 
     for(int i = 0; i<VMEM_NPAGES;i++){
         vmem->pt[i].flags = FLAG_INIT;
-        vmem->pt[i].frame = 0;
+        vmem->pt[i].frame = VOID_IDX;
 
 }
     }
@@ -425,10 +428,6 @@ void allocate_page(const int req_page, const int g_count) {
 }
 
 
-
-
-
-
  //  @brief      This function fetchs a page from disk into memory. The page table
  //              will be updated.
  //  @param      page Number of the page that should be removed
@@ -438,25 +437,87 @@ void allocate_page(const int req_page, const int g_count) {
 
 
 void fetch_page_from_disk(int page, int frame){
-    unsigned char startAddress = page * VMEM_NPAGES;
+    unsigned char startAddress = vmem->mainMemory[page * VMEM_PAGESIZE];
     fetch_page_from_pagefile(page, &startAddress);
-    vmem->mainMemory[frame] = page;
+    vmem->mainMemory[frame] = frame;
     vmem->pt[page].flags |= PTF_PRESENT;
 }
 
-void remove_page_from_memory(int page){
+
+/**
+ *****************************************************************************************
+ *  @brief      This function removes a page from main memory. If the page was modified,
+ *              it will be written back to disk.f The page table will be updated.
+ *
+ *  @param      page Number of the page that should be removed
+ *
+ *  @return     void
+ ****************************************************************************************/
+void remove_page_from_memory(int page) {
+    //berechnung der phy. Adresse ? =>
+    unsigned char startAddress = vmem->mainMemory[page * VMEM_PAGESIZE];
+    //page soll von der main memory entfernt werden
+    if (vmem->pt[page].flags & (PTF_DIRTY + PTF_PRESENT)) {
+        store_page_to_pagefile(page, &startAddress);
+    }
+    // 111 ^ 001 = 110, eventuell ohne xor und auf 0 setzen.
+    vmem->pt[page].flags ^= PTF_PRESENT;
+    vmem->pt[page].frame = VOID_IDX;
 }
 
-void find_remove_fifo(int page, int * removedPage, int *frame){
+
+/**
+ *****************************************************************************************
+ *  @brief      This function implements page replacement algorithm fifo.
+ *
+ *  @param      page Number of page that should be loaded into memory.
+ *
+ *  @param      removedPage Number of page that has been selected for replacement.
+ *              If an unused frame has selected, this parameter will not be
+ *              modified.
+ *
+ *  @param      frame Number of frame that will be used to store the page.
+ *
+ ****************************************************************************************/
+void find_remove_fifo(int page, int* removedPage, int *frame) {
+
+    static int first_index = 0;
+    *frame = first_index;
+    for (int i = 0; i < VMEM_NPAGES; i++) {
+        if (vmem->pt[i].frame == *frame) {
+            *removedPage = i;
+            break;
+        }
+        remove_page_from_memory(*removedPage);
+        first_index = (first_index + 1) % (VMEM_NFRAMES);
+    }
 }
+
+
+/**
+ *****************************************************************************************
+ *  @brief      This function implements page replacement algorithm clock.
+ *
+ *  @param      page Number of page that should be loaded into memory.
+ *
+ *  @param      removedPage Number of page that has been selected for replacement.
+ *              If an unused frame has selected, this parameter will not be
+ *              modified.
+ *
+ *  @param      frame Number of frame that will be used to store the page.
+ *
+ ****************************************************************************************/
 
 static void find_remove_clock(int page, int * removedPage, int *frame){
+
 }
 
 static void find_remove_aging(int page, int * removedPage, int *frame){
 }
 
 static void update_age_reset_ref(void){
+
+
 } 
 
 // EOF
