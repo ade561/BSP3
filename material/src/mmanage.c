@@ -127,7 +127,7 @@ static void dump_pt(void);
  *  @param      page Number of page that should be loaded into memory.
  *
  *  @param      removedPage Number of page that has been selected for replacement.
- *              If an unused frame has selected, this parameter will not be 
+ *              If an unused frame has selected, this parameter will not be
  *              modified.
  *
  *  @param      frame Number of frame that will be used to store the page.
@@ -375,10 +375,10 @@ void dump_pt(void) {
 
 void cleanup(void) {
     shmctl(shm_id,IPC_RMID,NULL);
+    shmdt(vmem);
     destroySyncDataExchange();
     cleanup_pagefile();
     close_logger();
-
 }
 
 void vmem_init(void) {
@@ -407,13 +407,13 @@ void vmem_init(void) {
 
 int find_unused_frame() {
     for(int i = 0; i < VMEM_NFRAMES; i++){
-        if(!(vmem->pt[i].flags & PTF_REF)){
-            vmem->pt[i].flags |= PTF_REF;
-            return vmem->pt[i].frame;
+        if(!(vmem->pt[i].flags & (PTF_REF + PTF_DIRTY))){
+            return i;
         }
     }
     return VOID_IDX;
 }
+
 
 void allocate_page(const int req_page, const int g_count) {
     int frame = VOID_IDX;
@@ -439,9 +439,9 @@ void allocate_page(const int req_page, const int g_count) {
 
 
 void fetch_page_from_disk(int page, int frame){
-    unsigned char startAddress = vmem->mainMemory[page * VMEM_PAGESIZE];
+    unsigned char startAddress = vmem->mainMemory[frame * VMEM_PAGESIZE];
     fetch_page_from_pagefile(page, &startAddress);
-    vmem->mainMemory[frame] = frame;
+    vmem->mainMemory[page] = frame;
     vmem->pt[page].flags |= PTF_PRESENT;
 }
 
@@ -456,7 +456,6 @@ void fetch_page_from_disk(int page, int frame){
  *  @return     void
  ****************************************************************************************/
 void remove_page_from_memory(int page) {
-    //berechnung der phy. Adresse ? =>
     unsigned char startAddress = vmem->mainMemory[page * VMEM_PAGESIZE];
     //page soll von der main memory entfernt werden
     if (vmem->pt[page].flags & (PTF_DIRTY + PTF_PRESENT)) {
@@ -466,7 +465,6 @@ void remove_page_from_memory(int page) {
     vmem->pt[page].flags ^= PTF_PRESENT;
     vmem->pt[page].frame = VOID_IDX;
 }
-
 
 /**
  *****************************************************************************************
@@ -495,6 +493,7 @@ void find_remove_fifo(int page, int* removedPage, int *frame) {
 }
 
 
+
 /**
  *****************************************************************************************
  *  @brief      This function implements page replacement algorithm clock.
@@ -510,8 +509,8 @@ void find_remove_fifo(int page, int* removedPage, int *frame) {
  ****************************************************************************************/
 
 static void find_remove_clock(int page, int *removedPage, int *frame){
-    static int first_index = 0; // index fuer das array Frame
-    *frame = first_index; // laufvariable
+    static int first_frame = 0; // index fuer das array Frame
+    *frame = first_frame; // laufvariable
     while(true){
         if(*frame < VMEM_NFRAMES) {
             //001 & 110 = 000  111 & 001 = 001   4b = 0100
@@ -528,9 +527,38 @@ static void find_remove_clock(int page, int *removedPage, int *frame){
                 break;
             }
         }
-        first_index = (first_index + 1) % (VMEM_NFRAMES);
+        first_frame = (first_frame + 1) % (VMEM_NFRAMES);
     }
 }
+
+/**
+ *
+static void find_remove_clock(int page, int* removedPage, int *frame) {
+    static int currentFrame = 0;
+    while (true) {
+        for (int i = 0; i < VMEM_NPAGES; i++) {
+            if (vmem->pt[i].frame == currentFrame) {
+                //status of reference-flag
+                int rFlag = vmem->pt[i].flags & PTF_REF;
+                //check reference-flag
+                if (rFlag == PTF_REF) {
+                    //reference-flag = 0
+                    vmem->pt[i].flags &= (PTF_DIRTY + PTF_PRESENT);
+                    currentFrame = (currentFrame + 1) % VMEM_NFRAMES;
+                    break;
+                } else {
+                    //remove page and set variables
+                    *removedPage = i;
+                    *frame = currentFrame;
+                    remove_page_from_memory(*removedPage);
+                    vmem->pt[page].flags |= PTF_REF;
+                    currentFrame = (currentFrame + 1) % VMEM_NFRAMES;
+                    return;
+                }
+            }
+        }
+    }
+}*/
 
 
 /* struct age {
@@ -541,11 +569,7 @@ struct age age[VMEM_NFRAMES];
  */
 
 static void find_remove_aging(int page, int * removedPage, int *frame){
-    //schritt 1: jede seite einen SW Zaehler geben mit 0
-        static int agingCounter = 0;
-        //Shifte den Zähler im 1 nach rechts (Division durch 2)
 
-    //schritt 2: Zyklisch (timer-Intervall 20ms)
 
 }
 
