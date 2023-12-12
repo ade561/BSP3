@@ -45,7 +45,7 @@ static void vmem_init(void) {
     TEST_AND_EXIT_ERRNO(key == VOID_IDX, "ERROR BY CREATING SYSTEM V SHARED MEMORY");
 
     /* We are only using the shm, don't set the IPC_CREAT flag */
-    int shmid = shmget(key,SHMSIZE,0644);
+    int shmid = shmget(key,SHMSIZE,0664);
     TEST_AND_EXIT_ERRNO(shmid == VOID_IDX, "ERROR BY CREATING THE SHM");
 
     /* attach shared memory to vmem */

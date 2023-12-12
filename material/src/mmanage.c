@@ -374,9 +374,11 @@ void dump_pt(void) {
 /* Your code goes here... */
 
 void cleanup(void) {
+    shmctl(shm_id,IPC_RMID,NULL);
     destroySyncDataExchange();
     cleanup_pagefile();
     close_logger();
+
 }
 
 void vmem_init(void) {
@@ -386,11 +388,11 @@ void vmem_init(void) {
     TEST_AND_EXIT_ERRNO(key == VOID_IDX, "ERROR BY CREATING SYSTEM V SHARED MEMORY");
 
     /* We are creating the shm, so set the IPC_CREAT flag */
-    int shmid = shmget(key,SHMSIZE,0644 | IPC_CREAT);
-    TEST_AND_EXIT_ERRNO(shmid == VOID_IDX, "ERROR BY CREATING THE SHM");
+    shm_id = shmget(key,SHMSIZE,0664 | IPC_CREAT);
+    TEST_AND_EXIT_ERRNO(shm_id == VOID_IDX, "ERROR BY CREATING THE SHM");
 
     /* Attach shared memory to vmem (virtual memory) */
-    vmem = shmat(shmid,NULL,0);
+    vmem = shmat(shm_id,NULL,0);
     TEST_AND_EXIT_ERRNO(vmem == (struct vmen_struct*) VOID_IDX,"ERROR ATTACH SHARED MEMORY TO VMEM");
 
     /* Fill with zeros */
@@ -480,7 +482,6 @@ void remove_page_from_memory(int page) {
  *
  ****************************************************************************************/
 void find_remove_fifo(int page, int* removedPage, int *frame) {
-
     static int first_index = 0;
     *frame = first_index;
     for (int i = 0; i < VMEM_NPAGES; i++) {
@@ -508,12 +509,57 @@ void find_remove_fifo(int page, int* removedPage, int *frame) {
  *
  ****************************************************************************************/
 
-static void find_remove_clock(int page, int * removedPage, int *frame){
-
+static void find_remove_clock(int page, int *removedPage, int *frame){
+    static int first_index = 0; // index fuer das array Frame
+    *frame = first_index; // laufvariable
+    while(true){
+        if(*frame < VMEM_NFRAMES) {
+            //001 & 110 = 000  111 & 001 = 001   4b = 0100
+            if (!(vmem->pt[*frame].flags & PTF_REF)) {
+                remove_page_from_memory(*removedPage);
+                //neue seite mit R==1
+                vmem->pt[*removedPage].frame = page;
+                vmem->pt[page].flags |= PTF_REF + PTF_DIRTY;
+                *frame = page;
+                break;
+            } else {                                  //wenn PTF_REF != 1
+                vmem->pt[page].flags ^= PTF_REF;
+                *frame = page;
+                break;
+            }
+        }
+        first_index = (first_index + 1) % (VMEM_NFRAMES);
+    }
 }
+
+
+/* struct age {
+   unsigned char age;  //!< 8 bit counter for aging page replacement algorithm
+   int page;           //!< page belonging to this entry
+ };
+struct age age[VMEM_NFRAMES];
+ */
 
 static void find_remove_aging(int page, int * removedPage, int *frame){
+    //schritt 1: jede seite einen SW Zaehler geben mit 0
+        static int agingCounter = 0;
+        //Shifte den Zähler im 1 nach rechts (Division durch 2)
+
+    //schritt 2: Zyklisch (timer-Intervall 20ms)
+
 }
+
+
+/**
+ *****************************************************************************************
+ *  @brief      This function does aging for aging page replacement algorithm.
+ *              It will be called periodic based on g_count.
+ *              This function must be used only when aging algorithm is activ.
+ *              Otherwise update_age_reset_ref may interfere with other page replacement
+ *              alogrithms that base on PTF_REF bit.
+ *
+ *  @return     void
+ ****************************************************************************************/
 
 static void update_age_reset_ref(void){
 
